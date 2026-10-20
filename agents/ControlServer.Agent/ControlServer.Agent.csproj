@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Agent</RootNamespace>
+    <AssemblyName>ControlServer.Agent</AssemblyName>
+    <Description>客户端 Agent 共享库（发现 / 注册 / 长连接 / 心跳 / 凭据落盘）—— 服务侧与托盘侧共用</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 出站长连接。SignalR 的**客户端**包，只在客户机上用。 -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+
+    <!-- 远控音频编码（M5.3）：Opus 的纯托管实现。
+         放在本程序集而不是 Platform.* 是刻意的：它是**跨平台**的（不碰任何平台 API），
+         而 Platform.* 那两层的存在理由是"隔离平台差异"——把一份纯托管编码器塞进去，
+         会让"平台层 = 平台专有实现"这条分层判据失效。 -->
+    <PackageReference Include="Concentus" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 客户端本地可写配置 + 本机配置页面（2026-10-14）。
+         配置的 DTO ⇄ 领域模型映射在 Core 的 AgentConfigMapper；本机页面走裸 TcpListener，
+         所以**不需要**引入 ASP.NET Core / Kestrel。 -->
+    <ProjectReference Include="..\..\src\ControlServer.Contracts\ControlServer.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Core\ControlServer.Core.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Platform.Abstractions\ControlServer.Platform.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 本机配置页面的内嵌资源。
+         ⚠️ `.html` 不在 SDK 默认的内嵌资源通配符里（默认只有 `**/*.resx`），所以要显式写。
+         LogicalName 与 AgentLocalConfigUi.PageResourceName 必须**逐字一致** ——
+         不一致时的表现是"页面 500，日志说找不到资源"，而资源其实就在程序集里。 -->
+    <EmbeddedResource Include="Config\local-ui.html"
+                      LogicalName="ControlServer.Agent.Config.local-ui.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 逐设备命名（`TelemetryCollector.BetterName`）是**纯函数**，但它守着一条容易被误改的规矩：
+         平台层已经给出真型号时不许再拿硬件清单去覆盖。让测试项目能直接钉住它，
+         比"等真机上发现曲线名字变了"便宜得多。 -->
+    <InternalsVisibleTo Include="ControlServer.Agent.Tests" />
+  </ItemGroup>
+
+</Project>

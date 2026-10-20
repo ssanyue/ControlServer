@@ -1,0 +1,68 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node
+node_modules/
+web/dist/
+
+# 前端构建产物（由 Vite 生成到 Server 的 wwwroot，不入库）
+#
+# ⚠️ 这里必须写 `wwwroot/*` 而不是 `wwwroot/`：
+#   忽略整个目录时，后面的 `!` 再想捞回 .gitkeep 是无效的（父目录已被排除，
+#   其中的文件连被重新包含的资格都没有）——规则会一直在，文件永远进不来。
+#   改成"忽略内容、保留目录"后，干净克隆出来 wwwroot 存在且为空，
+#   而"产物必须重新构建"这个事实仍然成立（见 ControlServer.Server.csproj 的嵌入说明）。
+src/ControlServer.Server/wwwroot/*
+!src/ControlServer.Server/wwwroot/.gitkeep
+
+# 运行期数据
+.data/
+publish/
+dist/
+
+# 本地工具链（按需自动下载：Inno Setup 编译器 ISCC 等，不入库）
+#   ⚠️ 里面放着 vendor-private.pem 等签发用私钥，一旦入库等于整套授权体系作废
+.tools/
+*.db
+*.db-wal
+*.db-shm
+logs/
+install.id
+
+# ⚠️ 密钥与授权文件绝不可入库：
+#   *.pem = 厂商私钥（泄漏 = 任何人可签发任意授权，整套授权体系归零）
+#   *.lic = 签发给客户的授权（客户数据，且绑机器码）
+*.pem
+*.lic
+*.key
+
+# Python 字节码缓存（deploy/backup/rehearse.py 等运行后产生）
+__pycache__/
+*.pyc
+
+# 压测逐秒原始序列（deploy/loadtest/reports/*.csv）
+#   .md 报告是交付证据，要入库（几十 KB，含结论表与分位）；
+#   同名 .csv 是逐秒原始数据（单轮可达 66 KB 且每轮都新增），可由 .md 里记录的同一套参数复跑再生成。
+deploy/loadtest/reports/*.csv
+
+# 本地验证产物（M7.x 调试留下的截图 / 探针 / 备用构建输出）
+#   实测：.build = 663 MB（含 altbin 整份构建输出）、.artifacts-check = 193 MB。
+#   GitHub 单文件 100 MB 是硬限制、仓库超 1 GB 会告警甚至拒收，
+#   这两类必须挡在门外。要留证据请落进 docs/ 或 deploy/ 的 .md。
+#
+#   ⚠️ `.build/` 不写前导斜杠：`-p:BaseOutputPath=.build\altbin\`（绕开被锁的
+#   bin\Debug）会在**每个项目目录下**各生成一份，只挡根目录会漏掉十几个。
+.build/
+/.artifacts-*/
+
+# 根目录 build/ 是早期 `dotnet build -o build` 留下的 Agent 输出（499 个 dll + 7 个 exe），
+# 与源码无关，也不是交付物（交付物在 dist/，已忽略）。构建脚本不引用它，可安全忽略。
+/build/
+
+# WorkBuddy 工作区：项目记忆（memory/）入库，其余会话级缓存不入库
+.workbuddy/*
+!.workbuddy/memory/

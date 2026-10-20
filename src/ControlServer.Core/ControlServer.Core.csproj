@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Core</RootNamespace>
+    <AssemblyName>ControlServer.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ControlServer.Contracts\ControlServer.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ANSI(GBK) 代码页提供程序。跨平台必须显式注册，否则 GetEncoding("GBK") 抛异常。 -->
+    <PackageReference Include="System.Text.Encoding.CodePages" />
+  </ItemGroup>
+
+</Project>

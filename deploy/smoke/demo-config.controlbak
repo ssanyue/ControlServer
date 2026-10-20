@@ -1,0 +1,145 @@
+{
+  "version": "1.0",
+  "settings": {
+    "appName": "展厅中控（演示）",
+    "listenPort": 9999,
+    "defaultButtonImage": "",
+    "freeLayoutEnabled": false,
+    "buttons": [
+      {
+        "id": "demo-open-light",
+        "order": 0,
+        "label": "开灯",
+        "pairingCode": "LIGHT-ON",
+        "pairingCodeType": "String",
+        "buttonColor": "#512DA8",
+        "textColor": "#FFFFFF",
+        "nameFontSize": 13,
+        "width": 150,
+        "height": 84,
+        "actions": [
+          { "id": "a1", "name": "灯光回路 1", "protocol": "UDP", "targetIp": "192.168.1.51", "targetPort": 6000, "dataType": "Hex", "dataContent": "A1 01 01", "delayMs": 0 }
+        ]
+      },
+      {
+        "id": "demo-close-light",
+        "order": 1,
+        "label": "关灯",
+        "pairingCode": "LIGHT-OFF",
+        "pairingCodeType": "String",
+        "buttonColor": "#3949AB",
+        "textColor": "#FFFFFF",
+        "nameFontSize": 13,
+        "width": 150,
+        "height": 84,
+        "actions": [
+          { "id": "a2", "name": "灯光回路 1", "protocol": "UDP", "targetIp": "192.168.1.51", "targetPort": 6000, "dataType": "Hex", "dataContent": "A1 01 00", "delayMs": 0 }
+        ]
+      },
+      {
+        "id": "demo-scene",
+        "order": 2,
+        "label": "开场场景",
+        "pairingCode": "SCENE-START",
+        "pairingCodeType": "String",
+        "buttonColor": "#00897B",
+        "textColor": "#FFFFFF",
+        "nameFontSize": 13,
+        "width": 190,
+        "height": 84,
+        "actions": [
+          { "id": "a3", "name": "投影开机", "protocol": "TCP", "targetIp": "192.168.1.60", "targetPort": 4352, "dataType": "ANSI", "dataContent": "PWR ON", "delayMs": 0 },
+          { "id": "a4", "name": "等投影就绪", "protocol": "UDP", "targetIp": "192.168.1.51", "targetPort": 6000, "dataType": "Hex", "dataContent": "A1 02 01", "delayMs": 1500 },
+          { "id": "a5", "name": "幕布下降", "protocol": "UDP", "targetIp": "192.168.1.70", "targetPort": 7000, "dataType": "Hex", "dataContent": "B2 01", "delayMs": 3000 }
+        ],
+        "timerEnabled": true,
+        "timerMode": "SpecificDays",
+        "timerTimes": ["09:00", "14:30"],
+        "timerDays": [1, 2, 3, 4, 5],
+        "monthlyPlans": []
+      },
+      {
+        "id": "demo-close-scene",
+        "order": 3,
+        "label": "收场场景",
+        "buttonColor": "#455A64",
+        "textColor": "#FFFFFF",
+        "nameFontSize": 13,
+        "width": 190,
+        "height": 84,
+        "actions": [
+          { "id": "a6", "name": "幕布上升", "protocol": "UDP", "targetIp": "192.168.1.70", "targetPort": 7000, "dataType": "Hex", "dataContent": "B2 00", "delayMs": 0 },
+          { "id": "a7", "name": "投影关机", "protocol": "TCP", "targetIp": "192.168.1.60", "targetPort": 4352, "dataType": "ANSI", "dataContent": "PWR OFF", "delayMs": 4000 }
+        ]
+      },
+      {
+        "id": "demo-wake",
+        "order": 4,
+        "label": "唤醒播放机",
+        "pairingCode": "WAKE-PLAYER",
+        "pairingCodeType": "String",
+        "buttonColor": "#6D4C41",
+        "textColor": "#FFFFFF",
+        "nameFontSize": 13,
+        "width": 150,
+        "height": 84,
+        "actions": [
+          { "id": "a8", "name": "魔术包", "protocol": "WoL", "targetIp": "192.168.1.80", "targetPort": 9, "dataType": "String", "dataContent": "AA:BB:CC:DD:EE:FF", "delayMs": 0 }
+        ]
+      }
+    ],
+    "subButtonSets": [
+      {
+        "id": "demo-machine-room",
+        "order": 5,
+        "label": "机房设备",
+        "buttonColor": "#00695C",
+        "textColor": "#FFFFFF",
+        "nameFontSize": 13,
+        "width": 170,
+        "height": 84,
+        "targetIp": "192.168.1.90",
+        "targetPort": 5000,
+        "subButtons": [
+          {
+            "id": "demo-sub-reboot",
+            "label": "重启",
+            "buttonColor": "#00897B",
+            "textColor": "#FFFFFF",
+            "nameFontSize": 12,
+            "width": 90,
+            "height": 90,
+            "actions": [
+              { "id": "sa1", "name": "重启指令", "protocol": "UDP", "dataType": "UTF-8", "dataContent": "REBOOT", "delayMs": 0 }
+            ]
+          },
+          {
+            "id": "demo-sub-shutdown",
+            "label": "关机",
+            "buttonColor": "#D84315",
+            "textColor": "#FFFFFF",
+            "nameFontSize": 12,
+            "width": 90,
+            "height": 90,
+            "actions": [
+              { "id": "sa2", "name": "关机指令", "protocol": "UDP", "dataType": "UTF-8", "dataContent": "SHUTDOWN", "delayMs": 0 }
+            ]
+          },
+          {
+            "id": "demo-sub-status",
+            "label": "查状态",
+            "buttonColor": "#0277BD",
+            "textColor": "#FFFFFF",
+            "nameFontSize": 12,
+            "width": 90,
+            "height": 90,
+            "actions": [
+              { "id": "sa3", "name": "查询", "protocol": "UDP", "dataType": "UTF-8", "dataContent": "STATUS?", "delayMs": 0 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "images": {}
+}

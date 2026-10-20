@@ -1,0 +1,33 @@
+# Docker 构建上下文裁剪 —— 既为提速，也避免把本机产物与机密带进镜像。
+#
+# ⚠️ 切勿忽略 web/ 本身：阶段 1 需要 web/package*.json 与 web/src。
+# ⚠️ 忽略 src/ControlServer.Server/wwwroot/ 是有意的：镜像里改由阶段 1 的前端产物覆盖，
+#    Dockerfile 会用 COPY --from=web 补上。
+
+**/bin/
+**/obj/
+**/node_modules/
+
+# 本机构建产物
+web/dist/
+src/ControlServer.Server/wwwroot/
+dist/
+publish/
+
+# 本地工具链与私有目录
+.tools/
+.git/
+.vs/
+.idea/
+.workbuddy/
+
+# 运行期数据与机密（绝不可入镜像）
+*.db
+*.db-wal
+*.db-shm
+logs/
+*.pem
+*.lic
+*.key
+*.user
+install.id

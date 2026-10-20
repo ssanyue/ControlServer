@@ -1,0 +1,222 @@
+<Window x:Class="ControlServer.LicenseTool.Gui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="授权签发工具（厂商内部）"
+        Icon="app.ico"
+        Width="1180" Height="820"
+        MinWidth="960" MinHeight="640"
+        Background="{StaticResource C.Bg}"
+        FontFamily="Microsoft YaHei UI, Segoe UI"
+        FontSize="13"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+
+        <!-- ══════════════════ 顶部标题条 ══════════════════ -->
+        <Border DockPanel.Dock="Top" Background="#1F2937" Padding="16,11">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="授权签发工具" Foreground="White" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="厂商内部工具 · 请勿随服务端交付"
+                               Foreground="#9CA3AF" FontSize="12" Margin="12,3,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock x:Name="TxtHeaderClock" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Foreground="#D1D5DB" FontSize="12"
+                           FontFamily="Cascadia Mono, Consolas" />
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════════════
+             签发授权（本工具唯一的页面）
+
+             ⚠️ 这里刻意没有页签控件：解读授权页已取消（要核对一份 .lic 时用命令行版
+                ControlServer.LicenseTool.exe inspect），授权类型选择也已取消
+                （三种类型对签发人没有实际区别，一律按正式授权签发）。
+             ══════════════════════════════════════════════════════════ -->
+        <Grid Margin="16,14,16,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" MinWidth="430" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="2*" MinWidth="330" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ── 左：表单 ── -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+                    <StackPanel>
+
+                        <!-- 授权对象 -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Label}" Margin="0,0,0,4" Text="授权对象" />
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="RbBound" Content="绑定机器码" IsChecked="True"
+                                                 GroupName="IssueTarget" VerticalAlignment="Center"
+                                                 Checked="OnIssueFormChanged" />
+                                    <RadioButton x:Name="RbUniversal" Content="通用授权（由客户首次导入时绑定）"
+                                                 GroupName="IssueTarget" Margin="24,0,0,0" VerticalAlignment="Center"
+                                                 Checked="OnIssueFormChanged" />
+                                </StackPanel>
+
+                                <TextBlock Style="{StaticResource Label}" Text="机器码" />
+                                <TextBox x:Name="TxtMachineCode" FontFamily="Cascadia Mono, Consolas" />
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="形如 AAAA-BBBB-CCCC-DDDD。客户在服务端「授权」页复制后发给你；写法随意（可带可不带横线），签发时会自动规范成 XXXX-XXXX-XXXX-XXXX。" />
+
+                                <TextBlock Style="{StaticResource Label}" Text="使用截止（仅通用授权）" />
+                                <StackPanel Orientation="Horizontal">
+                                    <DatePicker x:Name="DpDeadline" Width="160"
+                                                SelectedDateChanged="OnDeadlineDateChanged" />
+                                    <TextBox x:Name="TxtDeadlineTime" Width="100" Margin="8,0,0,0"
+                                             FontFamily="Cascadia Mono, Consolas" Text="23:59:59"
+                                             TextChanged="OnDeadlineTimeChanged" />
+                                </StackPanel>
+                                <TextBlock x:Name="TxtDeadlinePreview" Style="{StaticResource Hint}"
+                                           FontWeight="SemiBold" TextWrapping="Wrap" />
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="通用授权最迟可被导入绑定的时刻，超过它就不能再绑定了 —— 防止一份通用授权被无限期复用。必填。默认只到当天 23:59:59；需要更长的导入窗口，请自行把日期往后改。" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 有效期 -->
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Label}" Margin="0,0,0,4" Text="有效期" />
+                                <WrapPanel>
+                                    <RadioButton x:Name="RbPerpetual" Content="永久" GroupName="ExpiryMode"
+                                                 VerticalAlignment="Center" Checked="OnIssueFormChanged" />
+                                    <RadioButton x:Name="RbExpireDate" Content="到期日" GroupName="ExpiryMode"
+                                                 Margin="20,0,0,0" VerticalAlignment="Center" IsChecked="True"
+                                                 Checked="OnIssueFormChanged" />
+                                    <RadioButton x:Name="RbExpireInstant" Content="精确到期时刻" GroupName="ExpiryMode"
+                                                 Margin="20,0,0,0" VerticalAlignment="Center" Checked="OnIssueFormChanged" />
+                                </WrapPanel>
+
+                                <TextBlock Style="{StaticResource Label}" Text="快捷到期日" />
+                                <WrapPanel>
+                                    <Button Style="{StaticResource Secondary}" Content="3 天" Tag="d:3"
+                                            Margin="0,0,8,8" Click="OnExpiryShortcut" />
+                                    <Button Style="{StaticResource Secondary}" Content="1 个月" Tag="m:1"
+                                            Margin="0,0,8,8" Click="OnExpiryShortcut" />
+                                    <Button Style="{StaticResource Secondary}" Content="2 个月" Tag="m:2"
+                                            Margin="0,0,8,8" Click="OnExpiryShortcut" />
+                                    <Button Style="{StaticResource Secondary}" Content="3 个月" Tag="m:3"
+                                            Margin="0,0,8,8" Click="OnExpiryShortcut" />
+                                    <Button Style="{StaticResource Secondary}" Content="6 个月" Tag="m:6"
+                                            Margin="0,0,8,8" Click="OnExpiryShortcut" />
+                                    <Button Style="{StaticResource Secondary}" Content="1 年" Tag="y:1"
+                                            Margin="0,0,8,8" Click="OnExpiryShortcut" />
+                                </WrapPanel>
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="点一下就把「到期日」设为从今天起算的相应时间，并自动切到「到期日」模式。默认到期日是 3 天后。" />
+
+                                <TextBlock Style="{StaticResource Label}" Text="到期日（当天北京时间 23:59:59 结束）" />
+                                <DatePicker x:Name="DpExpireDate" Width="160" HorizontalAlignment="Left" />
+
+                                <TextBlock Style="{StaticResource Label}" Text="精确到期时刻（北京时间）" />
+                                <StackPanel Orientation="Horizontal">
+                                    <DatePicker x:Name="DpExpireInstant" Width="160" />
+                                    <TextBox x:Name="TxtExpireTime" Width="100" Margin="8,0,0,0"
+                                             FontFamily="Cascadia Mono, Consolas" Text="23:59:59" />
+                                </StackPanel>
+
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="「永久」只在绑定机器码时可用；通用授权必须有明确期限。完全不设有效期 = 永久授权。" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 附加信息 -->
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Label}" Margin="0,0,0,4" Text="附加信息（仅记录，不影响功能）" />
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,4" Text="序列号" />
+                                <TextBox x:Name="TxtSerial" />
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,4" Text="厂商标识" />
+                                <TextBox x:Name="TxtVendor" />
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,4" Text="客户备注" />
+                                <TextBox x:Name="TxtCustomer" TextChanged="OnCustomerChanged" />
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="客户备注会用来给输出文件命名（授权_客户名.lic），并写进授权文件供日后核对。" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 签发密钥（内置，无需选择） -->
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Label}" Margin="0,0,0,4" Text="签发密钥（已内置）" />
+                                <!-- 一行状态：只说"能不能用"，不再显示指纹。
+                                     指纹是给换钥的人做核对用的，日常签发看一眼没有意义。 -->
+                                <TextBlock x:Name="TxtBuiltInKey" Style="{StaticResource Hint}"
+                                           FontWeight="SemiBold" TextWrapping="Wrap"
+                                           Text="正在读取内置签发密钥…" />
+                                <TextBlock Style="{StaticResource Hint}" TextWrapping="Wrap"
+                                           Text="本工具已内置厂商签发密钥，无需选择或保管任何密钥文件 —— 打开就能签。工具本身即厂商机密，请勿外发。" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 输出文件 -->
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Label}" Margin="0,0,0,4" Text="输出文件" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtOutput" Grid.Column="0"
+                                             FontFamily="Cascadia Mono, Consolas" />
+                                    <Button Grid.Column="1" Style="{StaticResource Secondary}" Content="另存为…"
+                                            Margin="8,0,0,0" Click="OnPickOutput" />
+                                </Grid>
+                                <TextBlock x:Name="TxtOutputHint" Style="{StaticResource Hint}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 联网校时 -->
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Label}" Margin="0,0,0,4" Text="签发时刻" />
+                                <CheckBox x:Name="ChkNtp" Content="联网获取可信时间（作为 ivt 联网锚点）" IsChecked="True" />
+                                <CheckBox x:Name="ChkOffline" Content="取不到网络时间时，允许用本机时钟（不推荐）"
+                                          Margin="0,6,0,0" />
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Button Style="{StaticResource Secondary}" Content="测试取时"
+                                            Click="OnTestClock" />
+                                    <TextBlock x:Name="TxtClock" VerticalAlignment="Center" Margin="10,0,0,0"
+                                               Foreground="{StaticResource C.Muted}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="ivt 是授权防篡改的关键字段：它记录签发时从网络取到的可信时刻。用本机时钟填它，这条防线就没了。" />
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
+                    <Button x:Name="BtnIssue" Style="{StaticResource Primary}" Content="签 发"
+                            Click="OnIssueClick" />
+                    <TextBlock x:Name="TxtIssueBusy" VerticalAlignment="Center" Margin="12,0,0,0"
+                               Foreground="{StaticResource C.Muted}" FontSize="12" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ── 右：结论 + 日志 ── -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border x:Name="IssueBanner" Visibility="Collapsed" CornerRadius="4" Padding="12,8">
+                    <TextBlock x:Name="IssueBannerText" TextWrapping="Wrap" FontWeight="SemiBold" />
+                </Border>
+                <TextBox x:Name="IssueLog" Grid.Row="1" Style="{StaticResource Log}" Margin="0,8,0,0" />
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>

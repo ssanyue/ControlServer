@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Agent.Service</RootNamespace>
+    <AssemblyName>ControlServer.Agent.Service</AssemblyName>
+
+    <!-- 服务宿主：**控制台子系统**（不是 WinExe）。
+         原因：Windows 服务进程本来就不显示窗口，用 WinExe 只会让
+         "手工双击排除故障"时连一行输出都看不到。保持 Exe 后，
+         同一个 exe 可以直接在命令行里跑（前台、可看日志）——排障时这一点非常值钱。 -->
+    <OutputType>Exe</OutputType>
+
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ⚠️ 绝不引用 ControlServer.Server：那会把 ASP.NET Core 宿主与 EF Core
+         打进每个客户机的安装包（体积翻倍），也破坏"两个独立部署物"的边界。 -->
+    <ProjectReference Include="..\ControlServer.Agent\ControlServer.Agent.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Platform.Windows\ControlServer.Platform.Windows.csproj" />
+    <!-- 🔥 Linux 那三个实现（温度 / 开关机记录 / 电源）就在这里：它们**不是**空壳，
+         所以必须有这个引用；否则 Linux 上注册到的是 Noop，"能力已有"就成了一句空话。 -->
+    <ProjectReference Include="..\..\src\ControlServer.Platform.Linux\ControlServer.Platform.Linux.csproj" />
+  </ItemGroup>
+
+</Project>

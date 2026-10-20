@@ -1,0 +1,114 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Hosting">
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging">
+    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Data">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Api">
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Web">
+    <!-- 单文件 exe：把 wwwroot 静态资源嵌入程序集后，用 ManifestEmbeddedFileProvider 提供 -->
+    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Platform">
+    <PackageVersion Include="System.Management" Version="8.0.0" />
+
+    <!-- 开关机 / 蓝屏记录（M4.2）读 Windows 事件日志。
+         ⚠️ .NET Core 起 EventLog / EventLogReader 不再在共享框架里，必须显式引入。
+         只在 Platform.Windows 里引用；非 Windows 上调用会抛 PlatformNotSupported，
+         因此每一处调用前都有 OperatingSystem.IsWindows() 守卫。
+         替代方案（WMI Win32_NTLogEvent）不需要新包，但会整表扫描事件日志，
+         System 日志几十 MB 时一次查询要数秒 —— 对 30 秒一轮的轮询不可接受。 -->
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="8.0.0" />
+
+    <!-- 硬件温度 / 风扇 / 电压（M4.3，**可选能力**）。
+         ⚠️ 这是本解决方案唯一的第三方运行时依赖，也是唯一会被引入内核组件的包 ——
+            它把 WinRing0 驱动以 **gzip 资源内嵌在 DLL 里**
+            （LibreHardwareMonitor.Resources.WinRing0x64.gz），
+            **只有真正调用 Ring0.Open() 时才会释放到磁盘并加载**。
+            因此"安装时未勾选 = 永不落盘、永不加载、不装服务"是天然成立的，
+            不需要任何额外的打包排除规则。
+         ⚠️ 许可证 MPL-2.0（文件级 copyleft，允许闭源链接使用，需保留其文件内的许可声明）。
+
+         🔥 **版本必须钉在 0.9.3，不能升到 0.9.4+**（实测 2026-10-12）：
+            0.9.4 起把传递依赖升到 `System.Management >= 9.0.0`，
+            与本项目集中钉的 8.0.0 冲突 ⇒ 还原直接报 NU1605「检测到包降级」，
+            整条构建链挂掉。0.9.3 依赖的正是 `System.Management 8.0.0`，与 .NET 8 对齐。
+            （0.9.5/0.9.6 更狠：System.Management 10.0.x + 多两个包
+              DiskInfoToolkit / RAMSPDToolkit-NDD。）
+            0.9.3 没有 net8.0 资产，NuGet 会回退到它的 **net7.0** 资产 —— 这是正常的，可用。
+
+         ⚠️ **真实依赖足迹（7 个包，不止一个）**：HidSharp、Microsoft.Win32.Registry、
+            Mono.Posix.NETStandard（**自带 Linux 原生库 .so**）、System.IO.FileSystem.AccessControl、
+            System.IO.Ports、System.Management。win-x64 定向发布时 Linux 原生资产不会进包，
+            但**打包后必须复验单文件形态没被破坏**（见 REF-M4-Agent §14）。
+         只在 Platform.Windows 里引用；Agent 侧通过 IThermalSource 端口使用，
+         非 Windows / 未启用时注册 NoopThermalSource，连这个 DLL 都不会被加载。 -->
+    <PackageVersion Include="LibreHardwareMonitorLib" Version="0.9.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Client Agent">
+    <!-- 客户端 Agent 的出站长连接（M4.1）。
+         ⚠️ 只被 agents/ControlServer.Agent 引用 —— **绝不能进 Server**：
+         服务端用的是 Microsoft.AspNetCore.App 框架里的 SignalR 服务端，不需要这个客户端包。 -->
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.10" />
+
+    <!-- 客户端凭据落盘保护（DPAPI，M4.1）。LocalMachine 作用域：
+         客户端服务以 SYSTEM 运行，而托盘以普通用户运行，两者要能读同一份凭据。 -->
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+
+    <!-- M5.1 的 MJPEG 脚手架：GDI+ 的 JPEG 编码器。
+         ⚠️ 它是 Platform.Windows 的**第二个**第三方运行时依赖（第一个是 LibreHardwareMonitorLib）。
+         它自己不携带原生 dll（P/Invoke 的是系统自带的 gdiplus.dll），
+         所以理论上不影响绿色版单文件打包 —— 但按本仓惯例，**打包形态要复验一次**。
+         它的定位是脚手架 + 降级链末端，M5.4 换成 MF 硬编后**本包即可移除**。 -->
+    <PackageVersion Include="System.Drawing.Common" Version="8.0.10" />
+
+    <!-- M5.3 的音频编码：Opus 的**纯托管**实现（Concentus）。
+         🔥 为什么不用 libopus 的原生 dll：Agent 与托盘是按"绿色版 / 单文件"分发的，
+            一个按架构分支的原生 dll 会把那套分发形态打破（还要处理 x64/x86/arm64 三份资产）。
+            代价是编码速度约为 libopus 的 40–50%（README 自述）——
+            而 48 kHz 立体声 128 kbps 的实时系数在树莓派 1 上都有 0.98x，
+            在被控机那种 x86 上余量极大，这个代价可以忽略。
+         ⚠️ 它是**纯托管**（无原生依赖），所以对打包形态没有影响 —— 但仍按本仓惯例复验一次。
+         ⚠️ 许可证：Concentus 是 BSD 风格的自由许可（同 libopus 家族）。 -->
+    <PackageVersion Include="Concentus" Version="2.2.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Encoding">
+    <!-- ANSI/GBK 代码页：.NET 跨平台下 Encoding.GetEncoding("GBK") 默认不可用，
+         必须在运行时 RegisterProvider(CodePagesEncodingProvider.Instance)。
+         不加这个包，Linux 上取 GBK 会抛 NotSupportedException（见 M2 方案 §10.4）。 -->
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.10" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="FluentAssertions" Version="6.12.0" />
+  </ItemGroup>
+
+</Project>

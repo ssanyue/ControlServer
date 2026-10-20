@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Platform.Abstractions</RootNamespace>
+    <AssemblyName>ControlServer.Platform.Abstractions</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ControlServer.Core\ControlServer.Core.csproj" />
+  </ItemGroup>
+
+</Project>

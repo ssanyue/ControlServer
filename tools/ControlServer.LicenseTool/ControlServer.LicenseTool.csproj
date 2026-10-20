@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       授权签发工具（厂商侧，**不随服务端交付**）。
+
+       为什么是独立 CLI 而不是服务端里的一个页面：签发需要**私钥**。
+       私钥一旦随服务端 exe 交付到客户机房，整套授权体系当场归零
+       （拿到 exe 的人可以签出任意授权）。因此签发能力必须留在厂商本机，
+       与交付物物理隔离 —— 这个项目就是那道隔离。
+
+       签发密钥已**内嵌**进本 exe（见下方 ItemGroup）：调用方不必再指认密钥文件。
+       代价是本 exe 本身就是钥匙，必须按厂商内部机密对待。
+
+       它只引用 Core：签发与验签共用同一份载荷构造（LicenseCodec.BuildPayload），
+       不引用 Server / Infrastructure / Platform，也就不可能把私钥路径带进服务端。
+       ═══════════════════════════════════════════════════════════════ -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ControlServer.LicenseTool</RootNamespace>
+    <AssemblyName>ControlServer.LicenseTool</AssemblyName>
+
+    <!-- 输出不受系统区域设置影响：签发结果里的日期、数字必须是确定性的
+         （id / bt / 指纹都会被人抄写、比对、脚本解析）。 -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ControlServer.Core\ControlServer.Core.csproj" />
+  </ItemGroup>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       内嵌厂商私钥（与 GUI 版共用同一份 .pem 与同一份载入器）。
+
+       命令行版给脚本/CI 用，同样不该要求调用方去指认密钥文件：
+       默认直接用内嵌密钥；key 参数只在换钥、自检等高级场景下才需要。
+
+       ⚠️ 该 .pem 已 gitignore；因为已内嵌，**本 exe 本身就是钥匙**，
+          必须始终当作厂商内部机密：不随服务端交付、不进共享目录、不发客户。
+       ═══════════════════════════════════════════════════════════════ -->
+  <ItemGroup>
+    <Compile Include="..\LicenseToolKey.cs" Link="LicenseToolKey.cs" />
+
+    <EmbeddedResource Include="..\..\.tools\license-keys\vendor-private.pem"
+                      LogicalName="vendor-private.pem"
+                      Condition="Exists('..\..\.tools\license-keys\vendor-private.pem')" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- 控制台：压测工具是**跑在运维这台机器上**的，不属于交付物、不进安装包。 -->
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ControlServer.LoadTest</RootNamespace>
+    <AssemblyName>ControlServer.LoadTest</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 出站 SignalR 客户端：假 Agent 与假观看端都用它。 -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 🔥 引用**真 Agent 库**而不是自己写一套协议。
+         这是这个工具唯一可信的地方：`AgentConnection` / `AgentRegistrar` 就是现场那台
+         客户机跑的同一份代码，握手头、心跳参数个数、Welcome 解析、失败语义全都不用复刻
+         —— 复刻出来的"假 Agent"只能证明"我写的客户端能连上"，证明不了"真客户机能连上"。
+
+         ⚠️ 代价：它会把 Core / Platform.Abstractions 一并带进来。可接受 ——
+            本工具只在开发/运维机跑，不进任何交付路径。 -->
+    <ProjectReference Include="..\..\..\agents\ControlServer.Agent\ControlServer.Agent.csproj" />
+    <ProjectReference Include="..\..\..\src\ControlServer.Contracts\ControlServer.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

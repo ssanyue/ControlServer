@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Platform.Windows</RootNamespace>
+    <AssemblyName>ControlServer.Platform.Windows</AssemblyName>
+    <SupportedOSPlatform>windows</SupportedOSPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+    <PackageReference Include="System.Diagnostics.EventLog" />
+
+    <!-- M5.1：GDI 抓屏 + MJPEG 编码（脚手架 + 降级链末端）。
+         见 Directory.Packages.props 里那条注释：M5.4 换成 MF 硬编后即可移除。 -->
+    <PackageReference Include="System.Drawing.Common" />
+
+    <!-- 硬件温度（M4.3，可选）。见 Directory.Packages.props 里那段注释：
+         驱动是 DLL 内嵌的 gz 资源，不调用 Ring0.Open() 就永不落盘。
+         ⚠️ 这个包让 Platform.Windows 首次出现"第三方运行时依赖" ——
+            绿色版单文件打包必须复验（LHM 不含原生 dll，理论上不破坏单文件）。 -->
+    <PackageReference Include="LibreHardwareMonitorLib" />
+  </ItemGroup>
+
+  <!-- 托盘图标：编译期嵌入，绿色版单文件落地时磁盘上没有 assets 目录。
+       ⚠️ LogicalName 必须与 IconLoader.ResourceName 一字不差。
+       换正式图标时只需覆盖仓库根的 assets/app.ico（保持多尺寸），无需改代码。 -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\app.ico">
+      <LogicalName>ControlServer.Platform.Windows.app.ico</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- NOTIFYICONDATA 的布局/大小是托盘最经典的"无声失败"来源，
+       必须能被测试项目直接断言结构体尺寸。 -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="ControlServer.Server.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ControlServer.Platform.Abstractions\ControlServer.Platform.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

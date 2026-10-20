@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Server</RootNamespace>
+    <AssemblyName>ControlServer.Server</AssemblyName>
+    <UserSecretsId>controlserver-server</UserSecretsId>
+
+    <!-- ═══ 宿主形态 A1（已拍板）：WinExe = GUI 子系统 ═══
+         目的：双击启动时**没有控制台窗口** ⇒ 用户"关掉控制台"这个动作根本不存在，
+         R2（关控制台不停止服务）自然成立；停服务走托盘图标右键菜单。
+         开发期从终端启动仍能看到实时日志 —— Program.cs 会
+         AttachConsole(父进程) + 重绑定 Console.Out（见 WindowsInteractiveHost）。
+
+         ⚠️ 副作用（已在方案文档 §5.5 记录）：Console.Error 在双击场景**没人看得见**，
+         所以启动失败（如端口占用）必须改用 MessageBoxW 兜底。 -->
+    <OutputType>WinExe</OutputType>
+
+    <!-- exe 文件本身在资源管理器/任务栏里的图标（与托盘图标同源）。 -->
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+
+    <!-- 单文件/绿色版：不生成 IIS 用的 web.config（自托管不需要，还会多出一个文件） -->
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+
+    <!-- 生成内嵌文件清单 —— ManifestEmbeddedFileProvider 依赖它 -->
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ControlServer.Contracts\ControlServer.Contracts.csproj" />
+    <ProjectReference Include="..\ControlServer.Core\ControlServer.Core.csproj" />
+    <ProjectReference Include="..\ControlServer.Infrastructure\ControlServer.Infrastructure.csproj" />
+    <ProjectReference Include="..\ControlServer.Platform.Abstractions\ControlServer.Platform.Abstractions.csproj" />
+    <ProjectReference Include="..\ControlServer.Platform.Windows\ControlServer.Platform.Windows.csproj" />
+    <ProjectReference Include="..\ControlServer.Platform.Linux\ControlServer.Platform.Linux.csproj" />
+  </ItemGroup>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       绿色版打包：把前端产物与默认配置【嵌入 exe】，使发布结果只有一个文件。
+
+       · wwwroot  → 嵌入为资源，运行时由 ManifestEmbeddedFileProvider 提供
+                    （见 Program.cs 的静态文件配置）。开发期仍优先读磁盘
+                    上的 wwwroot，改前端无需重新编译后端。
+       · appsettings.json → 不随发布输出。所有配置项在 ServerOptions 里
+                    都有代码默认值，缺省即可正常运行；用户若要改端口/账号，
+                    把 appsettings.json 放到 exe 同目录即可被自动加载
+                    （双击时工作目录 = exe 所在目录）。
+       ═══════════════════════════════════════════════════════════════ -->
+  <ItemGroup>
+    <Content Update="wwwroot\**" CopyToPublishDirectory="Never" />
+    <EmbeddedResource Include="wwwroot\**" />
+
+    <Content Update="appsettings.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Production.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <!-- M2-E5：端口热切换的核心实现是服务器内部细节（SwitchableConnectionListener 等），
+       需要让集成测试项目直接对它们写单元测试 —— 尤其是"内层 listener 返回 null 不能透传
+       给 Kestrel"这条，它对应的缺陷只会表现为"端口切了但没人接"，从 HTTP 层看不出来。 -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="ControlServer.Server.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

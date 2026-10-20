@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Agent.Tray</RootNamespace>
+    <AssemblyName>ControlServer.Agent.Tray</AssemblyName>
+
+    <!-- 托盘伴侣：纯 GUI 常驻进程，**不能有控制台窗口**
+         （否则用户手一抖关掉黑窗就把托盘关了，而服务其实还活着 —— 那种"没反应"的报障最费时间）。
+         TargetFramework 由 Directory.Build.props 统一为 net8.0（铁律 #3），
+         所以这里和 Platform.Windows 一样靠 P/Invoke 展示托盘，而不是 WinForms。 -->
+    <OutputType>WinExe</OutputType>
+
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 只做"看一眼状态 + 起停服务"，因此**不需要** DI/Hosting 那一整套。
+         引进来只会让一个几百行的托盘进程多出十几 MB 依赖。 -->
+    <ProjectReference Include="..\ControlServer.Agent\ControlServer.Agent.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Platform.Windows\ControlServer.Platform.Windows.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.TrayAgent</RootNamespace>
+    <AssemblyName>ControlServer.TrayAgent</AssemblyName>
+
+    <!-- 托盘助手是纯 GUI 常驻进程：**不能有控制台窗口**（否则用户关掉它就"顺手"把托盘关了）。
+         TargetFramework 由 Directory.Build.props 统一为 net8.0（铁律 #3），
+         所以这里和 Platform.Windows 一样靠 P/Invoke 而不是 WinForms。 -->
+    <OutputType>WinExe</OutputType>
+
+    <!-- 与 Server 同源的图标资源（exe 自身图标）。 -->
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+
+    <!-- 就一个 exe，不需要 web.config 之类。 -->
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 刻意**不**引用 ControlServer.Server：托盘助手不需要 ASP.NET Core，
+         也不需要任何服务端代码。它只通过 SCM + /healthz 与主服务打交道，
+         这样两者版本不一致也不会坏（方案 §11.2）。 -->
+    <ProjectReference Include="..\ControlServer.Platform.Abstractions\ControlServer.Platform.Abstractions.csproj" />
+    <ProjectReference Include="..\ControlServer.Platform.Windows\ControlServer.Platform.Windows.csproj" />
+  </ItemGroup>
+
+</Project>

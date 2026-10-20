@@ -1,0 +1,109 @@
+<Application x:Class="ControlServer.LicenseTool.Gui.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+
+        <!-- ── 调色板 ───────────────────────────────────────────── -->
+        <SolidColorBrush x:Key="C.Bg"     Color="#F4F6F9" />
+        <SolidColorBrush x:Key="C.Panel"  Color="#FFFFFF" />
+        <SolidColorBrush x:Key="C.Border" Color="#D8DEE7" />
+        <SolidColorBrush x:Key="C.Text"   Color="#1E2430" />
+        <SolidColorBrush x:Key="C.Muted"  Color="#6B7280" />
+        <SolidColorBrush x:Key="C.Accent" Color="#2563EB" />
+        <SolidColorBrush x:Key="C.Ok"     Color="#15803D" />
+        <SolidColorBrush x:Key="C.Warn"   Color="#B45309" />
+        <SolidColorBrush x:Key="C.Danger" Color="#B91C1C" />
+
+        <!-- ── 文字样式 ─────────────────────────────────────────── -->
+
+        <!-- 表单里每一项的小标题 -->
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource C.Text}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,12,0,4" />
+        </Style>
+
+        <!-- 灰色说明文字。签发人不是开发者，注释必须写在界面上而不是手册里。 -->
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource C.Muted}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+
+        <Style x:Key="Mono" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Microsoft YaHei UI" />
+            <Setter Property="Foreground" Value="{StaticResource C.Text}" />
+        </Style>
+
+        <!-- ── 卡片 ─────────────────────────────────────────────── -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource C.Panel}" />
+            <Setter Property="BorderBrush" Value="{StaticResource C.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14,10,14,14" />
+        </Style>
+
+        <!-- ── 等宽日志框 ───────────────────────────────────────── -->
+        <Style x:Key="Log" TargetType="TextBox">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="AcceptsTab" Value="True" />
+            <!-- 不换行：报告里的"标签 — 值"靠对齐表意，折行反而看不清；
+                 长行交给横向滚动条。 -->
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Microsoft YaHei UI" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Background" Value="#FBFCFE" />
+            <Setter Property="BorderBrush" Value="{StaticResource C.Border}" />
+            <Setter Property="Padding" Value="8" />
+        </Style>
+
+        <!-- ── 按钮 ─────────────────────────────────────────────── -->
+
+        <!-- 主操作（每个页面只该有一个） -->
+        <Style x:Key="Primary" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource C.Accent}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="22,9" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.90" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.80" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 次要操作（浏览 / 复制 …） -->
+        <Style x:Key="Secondary" TargetType="Button">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="MinWidth" Value="72" />
+        </Style>
+
+    </Application.Resources>
+</Application>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Platform.Linux</RootNamespace>
+    <AssemblyName>ControlServer.Platform.Linux</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ControlServer.Platform.Abstractions\ControlServer.Platform.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 纯解析函数（sysfs 文本 / wpctl / pactl / amixer / last）暴露给单测：
+         它们是这一层最容易错、错了又最不容易被发现的部分，而"读 /sys"那一半
+         只能在 Linux 真机上验。与本仓 Platform.Windows 的做法一致。 -->
+    <InternalsVisibleTo Include="ControlServer.Agent.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 这个页面只在 127.0.0.1 上被本机浏览器打开，不外链任何资源（离线也得能用）。 -->
+<title>本机配置 · 客户端Server</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --border: #dcdfe6; --text: #1f2329;
+    --muted: #8a9099; --accent: #2f6fed; --ok: #1a9c5b; --warn: #c07d00; --err: #d03050;
+    --radius: 8px; --mono: ui-monospace, Consolas, "Cascadia Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181d; --panel: #1e2127; --border: #32363e; --text: #e6e8eb;
+      --muted: #8b9199; --accent: #5b93ff; --ok: #3ecf8e; --warn: #e0a83a; --err: #ff6b81;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px 16px 40px; background: var(--bg); color: var(--text);
+    font: 13px/1.6 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  h2 { font-size: 13px; margin: 0; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .mono { font-family: var(--mono); }
+  .small { font-size: 12px; }
+
+  .badge {
+    display: inline-block; padding: 1px 7px; border-radius: 999px;
+    border: 1px solid var(--border); font-size: 11px; white-space: nowrap;
+  }
+  .badge.ok { color: var(--ok); border-color: var(--ok); }
+  .badge.warn { color: var(--warn); border-color: var(--warn); }
+  .badge.err { color: var(--err); border-color: var(--err); }
+  .spacer { flex: 1 1 auto; }
+
+  /* 「服务端」信息表：左列是名、右列是值。值一律等宽 —— 地址 / ID / 版本号 / 时间
+     混在比例字体里对不齐，而这一栏的用处恰恰是"照着念 / 抄下来核对"。 */
+  .kv {
+    display: grid; grid-template-columns: max-content minmax(0, 1fr);
+    gap: 3px 14px; margin: 0 0 9px; font-size: 12px;
+  }
+  .kv dt { color: var(--muted); white-space: nowrap; }
+  .kv dd { margin: 0; word-break: break-all; }
+
+  .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 20px 0 8px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px;
+  }
+  .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+         padding-bottom: 7px; border-bottom: 1px dashed var(--border); }
+  .row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  /* 「服务端」的**摘要行**（2026-10-15）：常显的一行 —— 徽标 + 地址 + 展开开关。
+     底下那份十行明细默认收起：日常只用得上"连没连上、连的哪个地址"。
+     摘要行自己不带下边框，分隔线交给明细区（收起时就不该有条悬空的虚线）。 */
+  .row.summary { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .server-addr { font-size: 12px; word-break: break-all; }
+  #serverDetail { border-top: 1px dashed var(--border); margin-top: 9px; padding-top: 8px; }
+  #serverToggle { padding: 1px 8px; font-size: 11px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 0 12px; }
+  @media (max-width: 760px) { .grid3 { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 7px; min-width: 0; }
+  .field > label { font-size: 11px; color: var(--muted); }
+
+  label.inline {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+    cursor: pointer; white-space: nowrap;   /* 「端口」两个字绝不能被折成竖排 */
+  }
+  input, select {
+    width: 100%; padding: 5px 8px; font: inherit; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  }
+  input[type="checkbox"] { width: 15px; height: 15px; padding: 0; accent-color: var(--accent); }
+  input[type="number"] { font-family: var(--mono); }
+
+  button {
+    padding: 5px 11px; font: inherit; color: var(--text); background: var(--panel);
+    border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger.armed { color: var(--err); border-color: var(--err); }
+
+  .empty {
+    background: var(--panel); border: 1px dashed var(--border); border-radius: var(--radius);
+    padding: 10px 12px; color: var(--muted); font-size: 12px; margin-bottom: 8px;
+  }
+  .notice { padding: 9px 12px; border-radius: var(--radius); font-size: 12px; margin: 10px 0; }
+  .notice.info { background: var(--panel); border: 1px solid var(--border); }
+  .notice.ok { border: 1px solid var(--ok); color: var(--ok); }
+  .notice.err { border: 1px solid var(--err); color: var(--err); }
+
+  .savebar {
+    position: sticky; bottom: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-top: 16px; padding: 12px 12px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .idx { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* 接收到的数据（只读列表）：等宽 + 可滚，别让一屏记录把页面顶得没边。 */
+  .rx {
+    list-style: none; margin: 8px 0; padding: 0; max-height: 260px; overflow: auto;
+    border: 1px solid var(--border); border-radius: 6px;
+  }
+  .rx li {
+    display: grid; grid-template-columns: 78px 108px 1fr; gap: 8px; align-items: baseline;
+    padding: 5px 9px; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .rx li:last-child { border-bottom: none; }
+  .rx .t { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+  .rx .raw { font-family: var(--mono); word-break: break-all; }
+  .rx .detail { color: var(--muted); font-size: 11px; }
+  .rx .src { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+  .rx li.executed .raw { color: var(--ok); }
+  .rx li.failed .raw, .rx li.unrecognized .raw { color: var(--err); }
+  .rx li.blocked .raw, .rx li.ignored .raw { color: var(--warn); }
+  .rx li.rx-empty { display: block; text-align: center; color: var(--muted); padding: 16px 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>本机配置</h1>
+  <div class="muted">这台机器自己的任务配置。改完点「保存并在本机生效」，立刻生效 —— <strong>不需要中心服务端</strong>。</div>
+
+  <!-- ① 服务端（这台机器与中心的关系；含配置同步状态） -->
+  <div class="head">
+    <h2>服务端</h2>
+    <span class="muted">这台机器与中心的关系 —— 中心不在时本机照常独立运行</span>
+    <span class="spacer"></span>
+    <button id="openServer" disabled>打开服务端网页</button>
+  </div>
+  <div class="card">
+    <!-- 🔥 2026-10-15（本轮）：这一行是**常显摘要**（徽标 + 地址 + 展开开关），
+         其余明细默认收起 —— 「服务端」那十行信息里，日常要看的只有"连没连上、连的哪个地址"。
+         ⚠️ 收起状态由 JS 里的 serverOpen **一个地方**说了算，渲染函数不碰 hidden：
+            页面会周期性重拉状态，若让渲染去写 hidden，用户刚展开的明细会被下一次刷新按回去。 -->
+    <div class="row summary">
+      <span class="badge" id="serverBadge">载入中…</span>
+      <span class="mono server-addr" id="serverAddr">—</span>
+      <span class="muted" id="serverStatus"></span>
+      <span class="spacer"></span>
+      <button id="serverToggle" type="button" aria-expanded="false" aria-controls="serverDetail">详情 ▾</button>
+    </div>
+
+    <div id="serverDetail" hidden>
+      <dl class="kv" id="serverInfo"></dl>
+      <div class="muted" id="serverNote"></div>
+
+      <!-- 🔥 2026-10-15（需求①）：中心换了 IP / 端口时，**就在这台机器上改**。
+           程序目录里的 appsettings.json 通常不可写（Program Files + 普通用户），
+           而"中心搬走了、旧地址连不上"恰恰是最需要改地址的时刻 —— 所以这个输入框
+           是那种"平时用不到、用到时救命"的东西。
+           ⚠️ 留空 = 清除本机设置，回到"按安装配置 / 广播发现"。 -->
+      <div class="field">
+        <label for="serverTarget">连接的服务端（留空 = 按安装配置 / 广播发现）</label>
+        <div class="row">
+          <input id="serverTarget" type="text" spellcheck="false"
+                 placeholder="例如 192.168.1.10:8899" />
+          <button id="saveServer">保存并切换</button>
+        </div>
+      </div>
+      <div class="muted" id="serverEditNote"></div>
+    </div>
+  </div>
+
+  <div id="notice"></div>
+
+  <div id="body" hidden>
+    <!-- ② UDP 指令通道 -->
+    <div class="head">
+      <h2>UDP 指令通道</h2>
+      <span class="muted">这台机器<strong>唯一</strong>开着的入站端口（收关机 / 重启等指令）</span>
+    </div>
+    <div class="card">
+      <div class="row">
+        <label class="inline"><input type="checkbox" id="udpEnabled" /> 启用</label>
+        <label class="inline">端口 <input type="number" id="udpPort" style="width:110px" /></label>
+        <span class="spacer"></span>
+        <span class="badge" id="udpBadge"></span>
+      </div>
+      <div class="field">
+        <label>来源 IP 黑名单（留空 = 不限制来源，谁都能发）</label>
+        <input id="udpIps" placeholder="例如 192.168.1.10 192.168.1.11（逗号或空格分隔）" />
+      </div>
+      <div class="muted">
+        关闭时客户端<strong>完全不绑定该端口</strong> —— 但有一个例外（2026-10-14 起）：
+        <strong>没连上中心时这条通道会被强制开启</strong>（端口沿用这里填的值），
+        因为中心不可达时"还能不能关机"更要紧。中心一旦连上，就回到这里的设置说了算。
+        通道是<strong>明文</strong>的（2026-10-13 起不再签名）：报文就是一行 <code>DOWN</code> /
+        <code>RESTART</code> / <code>+</code> / <code>-</code> / <code>0</code> / <code>1</code>，
+        <strong>任意来源都能发</strong>，只有黑名单里的来源被丢弃。
+        所以这条通道的端口<strong>不要暴露到不可信网络</strong>。
+        要彻底不听（连未连接时也不听），只能改本机服务参数 <code>Agent:Tasks:Enabled=false</code>。
+      </div>
+    </div>
+
+    <!-- ③ 延时 / 循环发送 -->
+    <div class="head">
+      <h2>延时 / 循环发送</h2>
+      <span class="muted">延时是<strong>相对于本机 Agent 服务启动</strong></span>
+      <span class="spacer"></span>
+      <button data-add="send">添加一条</button>
+    </div>
+    <div id="sendList"></div>
+
+    <!-- ④ 定时发送 -->
+    <div class="head">
+      <h2>定时发送</h2>
+      <span class="muted">每天在填写的时刻各发一次（<span class="mono">HH:mm</span>）</span>
+      <span class="spacer"></span>
+      <button data-add="scheduled">添加一条</button>
+    </div>
+    <div id="scheduledList"></div>
+
+    <!-- ⑤ 延时启动程序 -->
+    <div class="head">
+      <h2>延时启动程序</h2>
+      <span class="muted">在<strong>用户会话</strong>里启动（服务在 Session 0，它弹的窗口用户看不见）</span>
+      <span class="spacer"></span>
+      <button data-add="launch">添加一条</button>
+    </div>
+    <div id="launchList"></div>
+
+    <!-- ⑥ 接收到的数据（只读 · 排查用） -->
+    <div class="head">
+      <h2>接收到的数据</h2>
+      <span class="muted">这台机器<strong>实际收到</strong>了什么 —— 「指令没反应」先看这里</span>
+      <span class="spacer"></span>
+      <label class="inline"><input type="checkbox" id="rxAuto" checked /> 每 3 秒刷新</label>
+      <button id="rxRefresh">立即刷新</button>
+    </div>
+    <div class="card">
+      <div class="row">
+        <span class="badge" id="rxUdpBadge">—</span>
+        <span class="muted" id="rxState"></span>
+      </div>
+      <div class="muted" id="rxSummary"></div>
+      <ul class="rx" id="rxList"></ul>
+      <div class="muted">
+        这里只显示<strong>这台机器收到的东西</strong>：UDP 数据报（局域网里发来的明文指令）与
+        中心经长连接下发的指令 / 任务 / 配置变更。一条都没有时，最常见的原因是
+        <strong>上面那个通道根本没在听</strong>（看这一行右侧的状态），
+        或者中间隔着防火墙 / 不在同一网段 —— 那时候有记录反而说明"发到了"。
+      </div>
+    </div>
+
+    <div class="savebar">
+      <button class="primary" id="save">保存并在本机生效</button>
+      <button id="discard">放弃改动</button>
+      <button id="reload">重新载入</button>
+      <span class="badge warn" id="dirtyBadge" hidden>有未保存的改动</span>
+      <span class="muted" id="saveHint"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   本机配置页（由客户端服务在 127.0.0.1 上托管）。
+
+   ⚠️ 这里**不做校验**：允许/拒绝的判据只有一份，在 Core 的 AgentConfigRules 里
+   （服务端保存前、本机保存前共用）。本页把用户填的东西原样送上去，
+   再把返回的问题清单**原样显示**。各写一份判据的下场是"本页放行、客户端拒绝"。
+   ═══════════════════════════════════════════════════════════════════════ */
+const TOKEN = '__CS_LOCAL_TOKEN__';
+const HEADER = 'X-CS-Local-Token';
+
+const LIMITS = { minUdpPort: 1024, maxUdpPort: 65535, maxDelaySeconds: 86400,
+                 minLoopIntervalSeconds: 1, maxTasksPerList: 500 };
+const PROTOCOLS = ['UDP', 'TCP'];
+const DATA_TYPES = [
+  { v: 'String', l: 'String（UTF-8 文本）' },
+  { v: 'Hex', l: 'Hex（十六进制）' },
+  { v: 'ANSI', l: 'ANSI（本机代码页 GBK）' },
+  { v: 'ASCII', l: 'ASCII（非 ASCII 替换为 ?）' },
+];
+
+let model = { udpEnabled: true, udpPort: 8090, udpBlockedText: '', send: [], scheduled: [], launch: [] };
+let baseline = '';
+let loaded = false;
+let armed = null;      // 两步式删除的"已武装"行 id
+let idSeq = 0;
+
+/**
+ * 「服务端」明细的展开状态（2026-10-15 需求：默认收起，只留徽标 + 地址）。
+ *
+ * 🔥 这是收起状态的**唯一事实源**，renderServer 全程不碰 hidden ——
+ *    页面会周期性重拉状态（接收记录那块每 3 秒一次），若让渲染去写 hidden，
+ *    用户刚展开的明细会被下一次刷新按回去。
+ *    这与「输入框有焦点时不让刷新覆盖」是同一条纪律：
+ *    渲染只负责写"值"，不负责写"用户的意图"。
+ */
+let serverOpen = false;
+
+/* ── 小工具 ─────────────────────────────────────────────────────────── */
+
+function el(tag, props, kids) {
+  const node = document.createElement(tag);
+  for (const k in (props || {})) {
+    if (k === 'class') node.className = props[k];
+    else if (k === 'text') node.textContent = props[k];
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2), props[k]);
+    else if (props[k] === true) node.setAttribute(k, '');
+    else node.setAttribute(k, props[k]);
+  }
+  (kids || []).forEach((c) => node.appendChild(c));
+  return node;
+}
+
+/** 前端生成的稳定 Id（服务端还会 `EnsureId` 兜底）。 */
+function newId() { idSeq += 1; return 't' + Date.now().toString(36) + '-' + idSeq.toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+
+/** 一格多值的文本 → 数组。全角逗号分号也认。 */
+function splitTokens(text) {
+  return String(text || '').split(/[\s,，;；、]+/).map((t) => t.trim()).filter((t) => t.length > 0);
+}
+
+function field(label, control) {
+  return el('div', { class: 'field' }, [el('label', { text: label }), control]);
+}
+
+function textInput(value, oninput, placeholder) {
+  const i = el('input', { value: value == null ? '' : value, placeholder: placeholder || '' });
+  i.addEventListener('input', () => oninput(i.value));
+  return i;
+}
+
+function numberInput(value, oninput, min, max) {
+  const i = el('input', { type: 'number', value: value == null ? 0 : value });
+  if (min != null) i.setAttribute('min', min);
+  if (max != null) i.setAttribute('max', max);
+  i.addEventListener('input', () => oninput(Number(i.value) || 0));
+  return i;
+}
+
+function selectInput(options, value, onchange) {
+  const s = el('select', {});
+  options.forEach((o) => {
+    const opt = el('option', { value: o.v, text: o.l });
+    if (o.v === value) opt.setAttribute('selected', '');
+    s.appendChild(opt);
+  });
+  s.addEventListener('change', () => onchange(s.value));
+  return s;
+}
+
+function checkbox(checked, onchange) {
+  const c = el('input', { type: 'checkbox' });
+  c.checked = !!checked;
+  c.addEventListener('change', () => onchange(c.checked));
+  return c;
+}
+
+/* ── 序列化 ─────────────────────────────────────────────────────────── */
+
+/** 与提交**完全相同**的序列化方式 —— "有没有未保存的改动"要用同一把尺子量。 */
+function buildPatch() {
+  return {
+    udp: { enabled: model.udpEnabled, port: Number(model.udpPort) || 0, blockedSourceIps: splitTokens(model.udpBlockedText) },
+    sendTasks: model.send.map((r) => ({
+      id: r.id, name: blank(r.name), protocol: r.protocol, targetIp: r.targetIp,
+      targetPort: Number(r.targetPort) || 0, dataType: r.dataType, data: r.data,
+      delaySeconds: Number(r.delaySeconds) || 0, isLoop: !!r.isLoop,
+      loopIntervalSeconds: Number(r.loopIntervalSeconds) || 0, enabled: !!r.enabled,
+    })),
+    scheduledTasks: model.scheduled.map((r) => ({
+      id: r.id, name: blank(r.name), protocol: r.protocol, targetIp: r.targetIp,
+      targetPort: Number(r.targetPort) || 0, dataType: r.dataType, data: r.data,
+      times: splitTokens(r.timesText), enabled: !!r.enabled,
+    })),
+    launchTasks: model.launch.map((r) => ({
+      id: r.id, name: r.name, programPath: r.programPath, argument: r.argument,
+      delaySeconds: Number(r.delaySeconds) || 0, enabled: !!r.enabled,
+    })),
+  };
+}
+
+function blank(v) { const t = String(v == null ? '' : v).trim(); return t === '' ? null : t; }
+
+function applyConfig(config) {
+  const udp = (config && config.udp) || {};
+  model.udpEnabled = udp.enabled !== false;
+  model.udpPort = udp.port == null ? 8090 : udp.port;
+  model.udpBlockedText = (udp.blockedSourceIps || []).join(' ');
+
+  model.send = ((config && config.sendTasks) || []).map((t) => ({
+    id: t.id, name: t.name || '', protocol: t.protocol, targetIp: t.targetIp,
+    targetPort: t.targetPort, dataType: t.dataType, data: t.data,
+    delaySeconds: t.delaySeconds, isLoop: !!t.isLoop,
+    loopIntervalSeconds: t.loopIntervalSeconds, enabled: t.enabled !== false,
+  }));
+
+  model.scheduled = ((config && config.scheduledTasks) || []).map((t) => ({
+    id: t.id, name: t.name || '', protocol: t.protocol, targetIp: t.targetIp,
+    targetPort: t.targetPort, dataType: t.dataType, data: t.data,
+    timesText: (t.times || []).join(', '), enabled: t.enabled !== false,
+  }));
+
+  model.launch = ((config && config.launchTasks) || []).map((t) => ({
+    id: t.id, name: t.name, programPath: t.programPath, argument: t.argument,
+    delaySeconds: t.delaySeconds, enabled: t.enabled !== false,
+  }));
+}
+
+/* ── 渲染 ───────────────────────────────────────────────────────────── */
+
+const $ = (id) => document.getElementById(id);
+
+function renderAll() {
+  $('udpEnabled').checked = model.udpEnabled;
+  $('udpPort').value = model.udpPort;
+  $('udpIps').value = model.udpBlockedText;
+  $('udpPort').disabled = !model.udpEnabled;
+  $('udpIps').disabled = !model.udpEnabled;
+
+  const badge = $('udpBadge');
+  badge.textContent = model.udpEnabled ? '已启用' : '未启用';
+  badge.className = 'badge ' + (model.udpEnabled ? 'ok' : '');
+
+  renderList('send');
+  renderList('scheduled');
+  renderList('launch');
+  refreshDirty();
+}
+
+function renderList(kind) {
+  const host = $(kind + 'List');
+  host.textContent = '';
+
+  const rows = model[kind];
+
+  if (rows.length === 0) {
+    const text = kind === 'send' ? '没有发送任务 —— 这台机器不会主动往外发任何数据。'
+      : kind === 'scheduled' ? '没有定时任务 —— 这台机器不会按时刻自动发送。'
+      : '没有启动任务 —— 这台机器不会被自动拉起任何程序。';
+    host.appendChild(el('div', { class: 'empty', text: text }));
+    return;
+  }
+
+  rows.forEach((r, index) => host.appendChild(cardFor(kind, r, index)));
+}
+
+function cardFor(kind, r, index) {
+  const rows = model[kind];
+  const head = el('div', { class: 'row' }, [
+    el('span', { class: 'idx', text: '#' + (index + 1) }),
+  ]);
+
+  if (r.protocol) head.appendChild(el('span', { class: 'badge', text: r.protocol }));
+  if (r.dataType) head.appendChild(el('span', { class: 'badge', text: r.dataType }));
+  if (kind === 'send' && r.isLoop) {
+    head.appendChild(el('span', { class: 'badge warn', text: '循环 ' + r.loopIntervalSeconds + 's' }));
+  }
+  if (!r.enabled) head.appendChild(el('span', { class: 'badge', text: '已停用' }));
+
+  head.appendChild(el('span', { class: 'spacer' }));
+
+  const enableLabel = el('label', { class: 'inline' }, [
+    checkbox(r.enabled, (v) => { r.enabled = v; renderList(kind); }),
+    el('span', { text: '启用' }),
+  ]);
+  head.appendChild(enableLabel);
+
+  head.appendChild(el('button', {
+    title: '上移', disabled: index === 0 || undefined,
+    text: '↑', onclick: () => move(kind, index, -1),
+  }));
+  head.appendChild(el('button', {
+    title: '下移', disabled: index === rows.length - 1 || undefined,
+    text: '↓', onclick: () => move(kind, index, 1),
+  }));
+
+  const del = el('button', {
+    class: 'danger' + (armed === r.id ? ' armed' : ''),
+    text: armed === r.id ? '确认删除？' : '删除',
+    title: armed === r.id ? '再点一次确认删除' : '删除本条',
+    onclick: () => removeRow(kind, r.id),
+  });
+  head.appendChild(del);
+
+  const card = el('div', { class: 'card' }, [head]);
+
+  if (kind === 'send' || kind === 'scheduled') {
+    card.appendChild(el('div', { class: 'grid3' }, [
+      field('名称（可空，仅用于辨认）', textInput(r.name, (v) => { r.name = v; refreshDirty(); }, '例如：每天开机报数')),
+      field('协议', selectInput(PROTOCOLS.map((p) => ({ v: p, l: p })), r.protocol, (v) => { r.protocol = v; renderList(kind); })),
+      field('数据类型', selectInput(DATA_TYPES, r.dataType, (v) => { r.dataType = v; renderList(kind); })),
+    ]));
+
+    card.appendChild(el('div', { class: 'grid3' }, [
+      field('目标 IP', textInput(r.targetIp, (v) => { r.targetIp = v; refreshDirty(); }, '192.168.1.100')),
+      field('端口', numberInput(r.targetPort, (v) => { r.targetPort = v; refreshDirty(); }, 1, 65535)),
+      kind === 'send'
+        ? field('首次延时（秒）', numberInput(r.delaySeconds, (v) => { r.delaySeconds = v; refreshDirty(); }, 0, LIMITS.maxDelaySeconds))
+        : field('发送时刻（可多个，逗号或空格分隔）', textInput(r.timesText, (v) => { r.timesText = v; refreshDirty(); }, '09:00, 12:30, 18:00')),
+    ]));
+
+    if (kind === 'send') {
+      card.appendChild(el('div', { class: 'grid3' }, [
+        field('循环发送', el('label', { class: 'inline' }, [
+          checkbox(r.isLoop, (v) => { r.isLoop = v; renderList(kind); }),
+          el('span', { text: '每隔一段重复发送' }),
+        ])),
+        field('循环间隔（秒）', numberInput(r.loopIntervalSeconds, (v) => { r.loopIntervalSeconds = v; refreshDirty(); }, LIMITS.minLoopIntervalSeconds, null)),
+        el('div', { class: 'field' }),
+      ]));
+    }
+
+    card.appendChild(field(
+      '数据内容' + (r.dataType === 'Hex' ? '（十六进制串）' : ''),
+      textInput(r.data, (v) => { r.data = v; refreshDirty(); }, '要发送的内容')));
+
+    if (kind === 'scheduled') {
+      card.appendChild(el('div', { class: 'muted', text:
+        '时刻会在保存时被归一化：9:5 会变成 09:05，全角冒号也认，重复的去重并按时间排序。保存后请核对这一格。' }));
+    }
+  } else {
+    card.appendChild(el('div', { class: 'grid3' }, [
+      field('显示名', textInput(r.name, (v) => { r.name = v; refreshDirty(); }, '例如：展厅播放器')),
+      field('程序完整路径', textInput(r.programPath, (v) => { r.programPath = v; refreshDirty(); }, 'D:\\Player\\player.exe')),
+      field('启动参数（可空）', textInput(r.argument, (v) => { r.argument = v; refreshDirty(); }, '例如：-fullscreen')),
+    ]));
+
+    card.appendChild(el('div', { class: 'grid3' }, [
+      field('延时（秒）', numberInput(r.delaySeconds, (v) => { r.delaySeconds = v; refreshDirty(); }, 0, LIMITS.maxDelaySeconds)),
+      el('div', { class: 'field' }),
+      el('div', { class: 'field' }),
+    ]));
+
+    card.appendChild(el('div', { class: 'muted', text:
+      '多个任务的延时是串行累加的：第一条相对于本机 Agent 服务启动，后面的相对于前一条完成 —— 这个列表的上下顺序会改变实际行为。'
+      + '⚠️ 要等这台机器上有人登录（托盘跑起来）才会执行；没人登录就一直等着，不会跳过。' }));
+  }
+
+  return card;
+}
+
+function move(kind, index, delta) {
+  const rows = model[kind];
+  const target = index + delta;
+  if (target < 0 || target >= rows.length) return;
+  const [item] = rows.splice(index, 1);
+  rows.splice(target, 0, item);
+  renderList(kind);
+  refreshDirty();
+}
+
+function removeRow(kind, id) {
+  if (armed !== id) { armed = id; renderList(kind); return; }
+  armed = null;
+  const rows = model[kind];
+  const i = rows.findIndex((r) => r.id === id);
+  if (i >= 0) rows.splice(i, 1);
+  renderList(kind);
+  refreshDirty();
+}
+
+function addRow(kind) {
+  const rows = model[kind];
+  if (rows.length >= LIMITS.maxTasksPerList) { notice('err', '每张清单最多 ' + LIMITS.maxTasksPerList + ' 条。'); return; }
+  armed = null;
+
+  if (kind === 'send') {
+    rows.push({ id: newId(), name: '', protocol: 'UDP', targetIp: '', targetPort: 9000,
+                dataType: 'String', data: '', delaySeconds: 0, isLoop: false,
+                loopIntervalSeconds: 60, enabled: true });
+  } else if (kind === 'scheduled') {
+    rows.push({ id: newId(), name: '', protocol: 'UDP', targetIp: '', targetPort: 9000,
+                dataType: 'String', data: '', timesText: '09:00', enabled: true });
+  } else {
+    rows.push({ id: newId(), name: '', programPath: '', argument: '', delaySeconds: 5, enabled: true });
+  }
+
+  renderList(kind);
+  refreshDirty();
+}
+
+/* ── 脏标记 / 提示 ─────────────────────────────────────────────────── */
+
+function isDirty() { return loaded && baseline !== '' && JSON.stringify(buildPatch()) !== baseline; }
+
+function refreshDirty() {
+  const dirty = isDirty();
+  $('dirtyBadge').hidden = !dirty;
+  $('save').disabled = !dirty;
+  $('save').textContent = dirty ? '保存并在本机生效' : '没有改动';
+  $('discard').disabled = !dirty;
+}
+
+function notice(kind, text) {
+  const host = $('notice');
+  host.textContent = '';
+  if (!kind) return;
+  host.appendChild(el('div', { class: 'notice ' + kind, text: text }));
+}
+
+/* ── 载入 / 保存 ───────────────────────────────────────────────────── */
+
+async function load() {
+  notice('', '');
+  try {
+    const r = await fetch('/api/config', { cache: 'no-store' });
+    const state = await r.json();
+
+    applyConfig(state.config);
+    baseline = JSON.stringify(buildPatch());
+    loaded = true;
+
+    $('body').hidden = false;
+    renderServer(state);
+    renderAll();
+  } catch (e) {
+    renderServerError('无法读取配置：' + (e && e.message ? e.message : e));
+  }
+}
+
+/* ── 「服务端」卡片：这台机器与中心的关系（2026-10-14） ──────────────────
+   一行一个事实，缺什么就画 "—"。
+   ⚠️ 空值一律显示成 "—"（"还不知道"），**绝不能显示成 0 或空串** ——
+      那会把"还没跟中心说上话"伪装成"中心那边没这项"，正好是最误导人的形态。 */
+function renderServer(state) {
+  const connected = !!state.connected;
+
+  const badge = $('serverBadge');
+  badge.textContent = connected ? '已连接中心' : '未连接中心';
+  badge.className = 'badge ' + (connected ? 'ok' : 'warn');
+
+  // 摘要行里的地址（本轮需求）。
+  // ⚠️ 没连上时**不能拿"要连的地址"冒充"已连的地址"** —— 退而显示目标地址时
+  //    必须带上「（目标）」这个后缀，否则现场会以为中心已经在了。
+  const addr = $('serverAddr');
+  const target = state.serverOverride || state.configuredServerUrl || '';
+
+  if (state.serverUrl) {
+    addr.textContent = String(state.serverUrl);
+    addr.className = 'mono server-addr';
+    addr.title = '';
+  } else if (target) {
+    addr.textContent = target + '（目标）';
+    addr.className = 'mono server-addr muted';
+    addr.title = '还没连上中心 —— 这是本机指定要连的地址。';
+  } else {
+    addr.textContent = '—';
+    addr.className = 'mono server-addr muted';
+    addr.title = '没有指定地址：靠 UDP 广播自动发现中心。';
+  }
+
+  // 🔥 连上时 statusText 就是"已连接 192.168.1.10:8899"，与左边的徽标 + 地址完全重复，
+  //    收起态没必要留；没连上时它正是"为什么没连上"（被拉黑 / 在线表已满 / 正在广播找），
+  //    那必须留在摘要行里看得见 —— 收起态不能把故障一起收进去。
+  $('serverStatus').textContent = connected ? '' : (state.statusText || '');
+
+  const dash = (v) => (v === null || v === undefined || v === '' ? '—' : String(v));
+  const when = (v) => (v ? new Date(v).toLocaleString() : '—');
+
+  const rows = [
+    ['服务端地址', dash(state.serverUrl)],
+    ['本机名称', dash(state.displayName)],
+    ['本机 ID', state.agentId === null || state.agentId === undefined ? '—' : '#' + state.agentId],
+    ['最后通信', when(state.lastSeenAt)],
+    ['服务端版本', dash(state.serverVersion)],
+    ['配置版本', state.version ? 'v' + state.version : '—'],
+    ['配置来源', state.origin === 'local' ? '本机（未同步）' : '中心下发'],
+    ['配置最后写入', when(state.updatedAt)],
+    ['同步状态', state.unsynced ? '⚠ 本机改动待同步到中心' : '已同步'],
+    ['客户端版本', dash(state.agentVersion)],
+  ];
+
+  const host = $('serverInfo');
+  host.textContent = '';
+  rows.forEach(([k, v]) => {
+    host.appendChild(el('dt', { text: k }));
+    host.appendChild(el('dd', { class: 'mono', text: v }));
+  });
+
+  $('serverNote').textContent = connected
+    ? '配置以中心为准：这里改的东西会自动同步过去（双向、后写覆盖）。'
+    : '未连接中心 —— 本机配置独立生效，下面改的东西先在本机用着，等连上中心会自动同步过去。'
+      + '此时 UDP 指令通道会按需求强制开启（端口沿用配置里的值）。';
+
+  const btn = $('openServer');
+  btn.disabled = !state.serverUrl;
+  btn.title = state.serverUrl ? '' : '还没连上过中心，不知道服务端地址。';
+
+  renderServerTarget(state);
+}
+
+/**
+ * 展开 / 收起「服务端」明细（2026-10-15）。
+ *
+ * ⚠️ 只有这里写 hidden —— 见 serverOpen 上面那段：渲染函数一律不碰它。
+ *    按钮文字直接用文字标出"点下去会怎样"，不靠图标方向去猜。
+ */
+function setServerOpen(open) {
+  serverOpen = !!open;
+
+  $('serverDetail').hidden = !serverOpen;
+
+  const btn = $('serverToggle');
+  btn.textContent = serverOpen ? '收起 ▴' : '详情 ▾';
+  btn.setAttribute('aria-expanded', serverOpen ? 'true' : 'false');
+}
+
+/**
+ * 「连接的服务端」那一行的输入框与说明（2026-10-15，需求①）。
+ *
+ * ⚠️ 输入框里放的是**本机设置**（state.serverOverride），不是"此刻连着的地址"。
+ *    这两个值可能不一样：改完要几秒才切过去 —— 如果拿 serverUrl 去填，
+ *    用户一刷新就会看到自己的修改"没保存上"。
+ */
+function renderServerTarget(state) {
+  const input = $('serverTarget');
+  const root = document.documentElement;
+
+  if (!root.dataset['serverTargetFocused']) input.value = state.serverOverride || '';
+
+  const parts = [];
+
+  if (state.serverOverride) {
+    parts.push('本机已指定：' + state.serverOverride + '（优先级最高）');
+  } else if (state.configuredServerUrl) {
+    parts.push('按安装时的配置：' + state.configuredServerUrl);
+  } else if (state.allowBroadcastDiscovery === false) {
+    parts.push('⚠ 没有指定地址，且广播发现已关闭 —— 客户端找不到中心。请在上面填一个地址。');
+  } else {
+    parts.push('没有指定地址：靠 UDP 广播自动发现中心');
+  }
+
+  if (state.serverOverridePath) parts.push('存于 ' + state.serverOverridePath);
+
+  parts.push('留空可清除本机指定。保存后客户端会在几秒内告知当前中心并切到新地址。');
+
+  $('serverEditNote').textContent = parts.join('｜');
+}
+
+/**
+ * 保存"连接的服务端地址"（2026-10-15，需求①）。
+ *
+ * ⚠️ 走的是**独立**端点 `/api/server`（不是 `/api/config`）：这个地址是纯本机的，
+ *    混进那份双向同步的配置里没有意义。令牌同样必须带上。
+ */
+async function saveServerTarget() {
+  const btn = $('saveServer');
+  const input = $('serverTarget');
+
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+  notice('', '');
+
+  try {
+    const r = await fetch('/api/server', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', [HEADER]: TOKEN },
+      body: JSON.stringify({ serverUrl: input.value.trim() }),
+    });
+
+    const result = await r.json();
+
+    if (!r.ok || !result.ok) {
+      notice('err', result && result.message ? result.message : ('保存失败（HTTP ' + r.status + '）'));
+      return;
+    }
+
+    notice('ok', result.message || '已保存。');
+    await refreshServer();
+  } catch (e) {
+    notice('err', '保存失败：' + (e && e.message ? e.message : e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '保存并切换';
+  }
+}
+
+/**
+ * 读配置失败：**必须留在摘要行里看得见**，不能收进明细（默认收起的那份）。
+ * 徽标、地址、状态三样都就地改写，明细区清空 —— 里面那份表是"上一次读到的"，
+ * 留着比空着更误导人。
+ */
+function renderServerError(text) {
+  const badge = $('serverBadge');
+  badge.textContent = '读取失败';
+  badge.className = 'badge err';
+
+  $('serverStatus').textContent = text;
+
+  const addr = $('serverAddr');
+  addr.textContent = '—';
+  addr.className = 'mono server-addr muted';
+  addr.title = '';
+
+  $('serverInfo').textContent = '';
+  $('serverNote').textContent = '';
+}
+
+async function save() {
+  $('save').disabled = true;
+  $('save').textContent = '保存中…';
+  notice('', '');
+
+  try {
+    const r = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', [HEADER]: TOKEN },
+      body: JSON.stringify(buildPatch()),
+    });
+
+    const result = await r.json();
+
+    if (!r.ok || !result.ok) {
+      notice('err', result && result.message ? result.message : ('保存失败（HTTP ' + r.status + '）'));
+      return;
+    }
+
+    // ⚠️ 一律以**返回的那份**重新渲染：本机也做静默归一化（9:5 → 09:05、协议名大写、
+    //    重复时刻去重排序），不重新渲染的话"我明明填了两个时刻，列表里只显示一个"就永远看不出来。
+    if (result.config) applyConfig(result.config);
+    baseline = JSON.stringify(buildPatch());
+    renderAll();
+
+    notice('ok', (result.message || '已保存。') + '（本机已生效；连上中心后会自动同步过去。）');
+    await refreshServer();
+  } catch (e) {
+    notice('err', '保存失败：' + (e && e.message ? e.message : e));
+  } finally {
+    refreshDirty();
+  }
+}
+
+/** 保存之后重新拉一次状态：配置版本 / 来源 / 同步状态都会变（页面不能停在保存前的那份）。 */
+async function refreshServer() {
+  try {
+    const state = await (await fetch('/api/config', { cache: 'no-store' })).json();
+    renderServer(state);
+  } catch { /* 状态刷新失败不影响保存结果 */ }
+}
+
+function discard() {
+  load().then(() => notice('ok', '已放弃未保存的改动。'));
+}
+
+/* ── 接收到的数据（只读） ───────────────────────────────────────────── */
+
+/** 结论 → 中文。未知值原样显示：客户机比页面新的时候不能变成空白。 */
+const OUTCOME_LABELS = {
+  executed: '已执行', failed: '执行失败', ignored: '未执行',
+  unrecognized: '认不出', blocked: '已拦截', accepted: '已受理',
+};
+
+const KIND_LABELS = { udp: 'UDP', signalr: '中心' };
+
+let rxTimer = null;
+
+function fmtClock(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? String(value) : d.toLocaleTimeString();
+}
+
+async function refreshReceived() {
+  try {
+    renderReceived(await (await fetch('/api/received', { cache: 'no-store' })).json());
+  } catch (e) {
+    $('rxState').textContent = '读取接收记录失败：' + (e && e.message ? e.message : e);
+  }
+}
+
+function renderReceived(rx) {
+  const listening = !!rx.udpListening;
+
+  const badge = $('rxUdpBadge');
+  badge.textContent = listening ? 'UDP 在听 :' + rx.udpPort : 'UDP 未监听';
+  badge.className = 'badge ' + (listening ? 'ok' : 'warn');
+
+  $('rxState').textContent = rx.udpStateText || '';
+
+  const summary = ['客户端 ' + (rx.agentVersion || '?')];
+  summary.push('本次启动以来收到 ' + (rx.receivedCount || 0) + ' 条');
+  if (typeof rx.capacity === 'number') summary.push('最多留 ' + rx.capacity + ' 条');
+  if (rx.startedAt) summary.push('启动于 ' + new Date(rx.startedAt).toLocaleString());
+  if (rx.udpExecuteEnabled === false) summary.push('⚠ 演练模式：收到的指令只识别、不执行');
+  $('rxSummary').textContent = summary.join(' · ');
+
+  const list = $('rxList');
+  list.textContent = '';
+
+  const entries = rx.entries || [];
+
+  if (entries.length === 0) {
+    // ⚠️ 空列表**必须配上通道状态**才是可读的：只说"没有记录"，
+    //    现场会去查防火墙；而真正的原因常常是"通道根本没在听"。
+    list.appendChild(el('li', {
+      class: 'rx-empty',
+      text: listening
+        ? '通道正在监听，但一条都还没收到 —— 报文没到达这台机器（查防火墙 / 网段 / 是不是发给了别的机器）。'
+        : '通道没在监听，所以什么都不会收到。先按上面那行的原因把通道起起来。',
+    }));
+    return;
+  }
+
+  entries.forEach((e) => {
+    const outcome = e.outcome || '';
+
+    list.appendChild(el('li', { class: outcome }, [
+      el('span', { class: 't', text: fmtClock(e.at) }),
+      el('span', {
+        class: 'badge',
+        text: (KIND_LABELS[e.kind] || e.kind || '?') + ' · ' + (OUTCOME_LABELS[outcome] || outcome || '?'),
+      }),
+      el('div', {}, [
+        el('div', { class: 'raw', text: e.raw === '' ? '(空报文)' : (e.raw || '') }),
+        el('div', {
+          class: 'detail',
+          text: [e.source, e.detail].filter((v) => v && String(v).length > 0).join(' · '),
+        }),
+      ]),
+    ]));
+  });
+}
+
+/** 自动刷新开关。关掉它是因为列表会跳：正在看某一条时被刷走很烦。 */
+function setRxAuto(on) {
+  if (rxTimer) { clearInterval(rxTimer); rxTimer = null; }
+  if (on) rxTimer = setInterval(refreshReceived, 3000);
+}
+
+/* ── 接线 ───────────────────────────────────────────────────────────── */
+
+$('udpEnabled').addEventListener('change', (e) => { model.udpEnabled = e.target.checked; renderAll(); });
+$('udpPort').addEventListener('input', (e) => { model.udpPort = Number(e.target.value) || 0; refreshDirty(); });
+$('udpIps').addEventListener('input', (e) => { model.udpBlockedText = e.target.value; refreshDirty(); });
+
+document.querySelectorAll('button[data-add]').forEach((b) => {
+  b.addEventListener('click', () => addRow(b.getAttribute('data-add')));
+});
+
+$('save').addEventListener('click', save);
+
+// 「连接的服务端」那一行（2026-10-15，需求①）。
+$('saveServer').addEventListener('click', saveServerTarget);
+
+// 「服务端」明细的展开 / 收起（2026-10-15 需求：默认收起，摘要行只留徽标 + 地址）。
+// 显式跑一次而不是靠 HTML 里的 hidden 属性，是为了让按钮文字与 serverOpen 不可能对不上。
+$('serverToggle').addEventListener('click', () => setServerOpen(!serverOpen));
+setServerOpen(false);
+
+// ⚠️ 有焦点时不让自动刷新把输入框覆盖掉：这个页面每几秒会重拉一次状态，
+//    而"正在输入一个新地址"与"状态刷新"撞上时，被冲掉的是用户刚打的字。
+//    （与任务配置里那几个输入框同一条纪律 —— 它们靠 renderAll 只在"值变了"时写 DOM 规避。）
+$('serverTarget').addEventListener('focus', () => {
+  document.documentElement.dataset['serverTargetFocused'] = '1';
+});
+$('serverTarget').addEventListener('blur', () => {
+  delete document.documentElement.dataset['serverTargetFocused'];
+});
+$('discard').addEventListener('click', discard);
+$('reload').addEventListener('click', () => load().then(() => notice('ok', '已重新载入。')));
+
+$('rxRefresh').addEventListener('click', refreshReceived);
+$('rxAuto').addEventListener('change', (e) => setRxAuto(e.target.checked));
+
+/**
+ * 「打开服务端网页」：地址**现取一次**再开。
+ * 页面可能是几小时前打开的（那时还没连上中心），拿 renderServer 时的旧状态判断会开出一个空标签页。
+ */
+$('openServer').addEventListener('click', async () => {
+  let url = null;
+  try {
+    url = (await (await fetch('/api/config', { cache: 'no-store' })).json()).serverUrl;
+  } catch { /* 拉不到就按下面那条提示处理 */ }
+
+  if (!url) {
+    notice('err', '还没连上中心服务端，不知道它的地址 —— 暂时没有网页可打开。');
+    return;
+  }
+
+  // ⚠️ 兼容两种形态：老版本状态文件里存的是纯地址，新版是完整 URL。
+  window.open(/^https?:\/\//i.test(url) ? url : 'http://' + url, '_blank', 'noopener');
+});
+
+load().then(() => {
+  // 接收记录独立于配置：**页面一打开就拉一次**，之后再按开关的节奏刷。
+  // 它不与 load() 合并，是因为"配置读得到、接收记录读不到"是完全可能的一种故障，
+  // 合并会让配置文件的一个错误把这块也一起带成空白。
+  refreshReceived();
+  setRxAuto($('rxAuto').checked);
+});
+</script>
+</body>
+</html>

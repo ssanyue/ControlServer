@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ControlServer.Agent.Tests</RootNamespace>
+    <AssemblyName>ControlServer.Agent.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 客户端 Agent 库（服务侧与托盘侧共用的那一份）。
+         ⚠️ 这个测试工程是**唯一**同时看到 Agent 库与两侧宿主逻辑的地方；
+             它不引用 ControlServer.Server（那是服务端，与客户机无关）。 -->
+    <ProjectReference Include="..\..\agents\ControlServer.Agent\ControlServer.Agent.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Core\ControlServer.Core.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Contracts\ControlServer.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\ControlServer.Platform.Abstractions\ControlServer.Platform.Abstractions.csproj" />
+    <!-- Linux 那几个实现里的**纯解析函数**在这里验（sysfs 文本 / wpctl / pactl / amixer / last）。
+         ⚠️ 只测纯函数：真机 IO（读 /sys、跑命令）只能在 Linux 机器上验。 -->
+    <ProjectReference Include="..\..\src\ControlServer.Platform.Linux\ControlServer.Platform.Linux.csproj" />
+  </ItemGroup>
+
+</Project>

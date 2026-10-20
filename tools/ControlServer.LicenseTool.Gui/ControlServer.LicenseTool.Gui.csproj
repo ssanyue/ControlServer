@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       授权签发工具 —— 图形界面（厂商侧，**不随服务端交付**）。
+
+       与命令行版（tools\ControlServer.LicenseTool）是同一件事的两个前端：
+         · 命令行版：给脚本用，参数化、可进 CI；
+         · 本图形界面：给"销售 / 现场支持"用，双击即可操作，不必记参数。
+       两者都把真正的规则交给 Core（LicenseIssuer / LicenseInspector），
+       因此界面怎么变都不影响"签出来的东西一不一致"。
+
+       它只引用 Core：不引用 Server / Infrastructure / Platform，
+       也就**不可能**把服务端代码或私钥路径带进这个内部工具。
+       ═══════════════════════════════════════════════════════════════ -->
+  <PropertyGroup>
+    <!-- WinExe：双击运行**不出现**控制台黑窗（这正是它存在的理由）。 -->
+    <OutputType>WinExe</OutputType>
+
+    <!-- WPF 必须 net8.0-windows；Directory.Build.props 统一给的 net8.0 在这里覆盖。
+         注意：这条只影响本项目，其它项目仍是 net8.0（铁律 #3）。 -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+
+    <RootNamespace>ControlServer.LicenseTool.Gui</RootNamespace>
+    <AssemblyName>ControlServer.LicenseTool.Gui</AssemblyName>
+
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+
+    <!-- 界面一律用中文，字号跟着系统走。 -->
+    <NeutralLanguage>zh-Hans</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ControlServer.Core\ControlServer.Core.csproj" />
+  </ItemGroup>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       内嵌厂商私钥。
+
+       两个签发工具（本 GUI 与命令行版）都在构建时把
+       .tools/license-keys/vendor-private.pem 嵌进程序集，于是运行期
+       **不需要任何密钥文件** —— 签发人双击 exe 就能签。
+
+       ⚠️ 关于这把钥匙的三条纪律（违反任何一条等于把签发权交出去）：
+         · 该 .pem 已 gitignore，绝不可入库、不可随服务端交付、不可进共享目录；
+         · 因为已内嵌，**本 exe 本身就是钥匙**，必须始终当作厂商内部机密保管；
+         · 换钥（LicenseTool new-key 加 force 覆盖）后必须重新构建本工具 + 服务端。
+
+       Condition：文件不存在时不报错、继续构建（产物会在运行时报"未内嵌私钥"），
+       这样"只想编个界面看看"的场景不会因为缺钥匙而卡住；真正要签发时再放回 .pem 即可。
+       ═══════════════════════════════════════════════════════════════ -->
+  <ItemGroup>
+    <Compile Include="..\LicenseToolKey.cs" Link="LicenseToolKey.cs" />
+
+    <EmbeddedResource Include="..\..\.tools\license-keys\vendor-private.pem"
+                      LogicalName="vendor-private.pem"
+                      Condition="Exists('..\..\.tools\license-keys\vendor-private.pem')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\assets\app.ico">
+      <Link>app.ico</Link>
+    </Resource>
+  </ItemGroup>
+
+</Project>

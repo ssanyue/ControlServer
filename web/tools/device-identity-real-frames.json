@@ -1,0 +1,397 @@
+[
+  {
+    "at": 1792030277276,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）"
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0"
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x0001245E",
+        "name": "NVIDIA GeForce GTX 1060 6GB"
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）"
+      },
+      {
+        "kind": "net",
+        "key": "{71880A95-E30C-43EE-A1A7-46AA456E40D2}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）"
+      }
+    ]
+  },
+  {
+    "at": 1792030449211,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）"
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0"
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x00012360",
+        "name": "NVIDIA GeForce GTX 1060 6GB"
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）"
+      },
+      {
+        "kind": "net",
+        "key": "{31E0387E-6A5A-454E-9232-12048DCF2803}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）"
+      }
+    ]
+  },
+  {
+    "at": 1792030454658,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）",
+        "readBps": 292766.02092095325,
+        "writeBps": 1521.3563932235309
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）",
+        "readBps": 74394898.13727812,
+        "writeBps": 4198278.05187491
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）",
+        "readBps": 1521.3563932235309,
+        "writeBps": 1521.3563932235309
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0",
+        "cpuPct": 19.602829032724422
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）",
+        "upBps": 32065.111940298506,
+        "downBps": 74537.12686567164
+      },
+      {
+        "kind": "net",
+        "key": "{31E0387E-6A5A-454E-9232-12048DCF2803}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）",
+        "upBps": 5993.8432835820895,
+        "downBps": 0
+      }
+    ]
+  },
+  {
+    "at": 1792030546238,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）"
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0"
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）"
+      },
+      {
+        "kind": "net",
+        "key": "{44E77D8E-BDE7-4803-87E5-0A6A339B6D56}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）"
+      }
+    ]
+  },
+  {
+    "at": 1792030552417,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）",
+        "readBps": 300491.00424138154,
+        "writeBps": 1535.565655657012
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）",
+        "readBps": 74063690.62220944,
+        "writeBps": 12226269.723194608
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）",
+        "readBps": 3071.131311314024,
+        "writeBps": 1535.565655657012
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0",
+        "cpuPct": 18.516638568910018
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x000123B4",
+        "name": "NVIDIA GeForce GTX 1060 6GB",
+        "gpuPct": 0.9743522881949859
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）",
+        "upBps": 20618.194231097455,
+        "downBps": 82244.2396313364
+      },
+      {
+        "kind": "net",
+        "key": "{44E77D8E-BDE7-4803-87E5-0A6A339B6D56}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）",
+        "upBps": 4884.109916367981,
+        "downBps": 0
+      }
+    ]
+  },
+  {
+    "at": 1792030629268,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）"
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0"
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x000122FF",
+        "name": "NVIDIA GeForce GTX 1060 6GB"
+      },
+      {
+        "kind": "net",
+        "key": "{1545D557-EF91-4322-BBAE-BD3D01EB60BB}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）"
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）"
+      }
+    ]
+  },
+  {
+    "at": 1792033842935,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）"
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）"
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0"
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x01B697A3",
+        "name": "NVIDIA GeForce GTX 1060 6GB"
+      },
+      {
+        "kind": "net",
+        "key": "{1545D557-EF91-4322-BBAE-BD3D01EB60BB}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）"
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）"
+      }
+    ]
+  },
+  {
+    "at": 1792034208206,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）",
+        "readBps": 44925.49835646151,
+        "writeBps": 761.4491246857883
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）",
+        "readBps": 210285692.69999132,
+        "writeBps": 16267218.37522484
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）",
+        "readBps": 9994.019761500971,
+        "writeBps": 761.4491246857883
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0",
+        "cpuPct": 36.56412338979581
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x000123CA",
+        "name": "NVIDIA GeForce GTX 1060 6GB",
+        "gpuPct": 2.1262807612098156
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）",
+        "upBps": 28938.952536824876,
+        "downBps": 52270.21276595745
+      },
+      {
+        "kind": "net",
+        "key": "{71424A69-66CD-4169-AA04-27FBEDC97671}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）"
+      }
+    ]
+  },
+  {
+    "at": 1792038737640,
+    "devices": [
+      {
+        "kind": "disk",
+        "key": "disk0",
+        "name": "物理磁盘 0（D:）",
+        "readBps": 3343145.7769845035,
+        "writeBps": 765.7228073716224
+      },
+      {
+        "kind": "disk",
+        "key": "disk1",
+        "name": "物理磁盘 1（C:）",
+        "readBps": 49598354.83258394,
+        "writeBps": 6828715.996140129
+      },
+      {
+        "kind": "disk",
+        "key": "disk2",
+        "name": "物理磁盘 2（E:）",
+        "readBps": 0,
+        "writeBps": 0
+      },
+      {
+        "kind": "cpu",
+        "key": "cpu0",
+        "name": "物理 CPU 0",
+        "cpuPct": 4.950080116761624
+      },
+      {
+        "kind": "gpu",
+        "key": "luid_0x00000000_0x000123CA",
+        "name": "NVIDIA GeForce GTX 1060 6GB",
+        "gpuPct": 0.07541951720852552
+      },
+      {
+        "kind": "net",
+        "key": "{7BA836B8-A489-43B4-9F50-F28515F6FDCF}",
+        "name": "Realtek Gaming 2.5GbE Family Controller（以太网）",
+        "upBps": 508.98203592814366,
+        "downBps": 511.9760479041916
+      },
+      {
+        "kind": "net",
+        "key": "{71424A69-66CD-4169-AA04-27FBEDC97671}",
+        "name": "Hyper-V Virtual Ethernet Adapter（vEthernet (Default Switch)）",
+        "upBps": 0,
+        "downBps": 0
+      }
+    ]
+  }
+]

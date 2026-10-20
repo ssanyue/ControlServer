@@ -1,0 +1,8 @@
+{
+  "generatedAt": "auto",
+  "projects": {
+    "ControlServer.Core.Tests": 942,
+    "ControlServer.Agent.Tests": 429,
+    "ControlServer.Server.IntegrationTests": 620
+  }
+}
